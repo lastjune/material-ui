@@ -1,12 +1,12 @@
-let React = require('react');
-let StylePropable = require('../mixins/style-propable');
-let TimeDisplay = require("./time-display");
-let ClockButton = require("./clock-button");
-let ClockHours = require("./clock-hours");
-let ClockMinutes = require("./clock-minutes");
+const React = require('react');
+const StylePropable = require('../mixins/style-propable');
+const TimeDisplay = require("./time-display");
+const ClockButton = require("./clock-button");
+const ClockHours = require("./clock-hours");
+const ClockMinutes = require("./clock-minutes");
 
 
-let Clock = React.createClass({
+const Clock = React.createClass({
 
   mixins: [StylePropable],
 
@@ -15,6 +15,10 @@ let Clock = React.createClass({
     mode: React.PropTypes.oneOf(['hour', 'minute']),
     format: React.PropTypes.oneOf(['ampm', '24hr']),
     isActive: React.PropTypes.bool,
+  },
+
+  contextTypes: {
+    muiTheme: React.PropTypes.object,
   },
 
   getDefaultProps() {
@@ -111,7 +115,7 @@ let Clock = React.createClass({
     }
 
     return (
-      <div style={styles.root}>
+      <div style={this.prepareStyles(styles.root)}>
         <TimeDisplay
           selectedTime={this.state.selectedTime}
           mode={this.state.mode}
@@ -120,7 +124,7 @@ let Clock = React.createClass({
           onSelectHour={this._setMode.bind(this, 'hour')}
           onSelectMin={this._setMode.bind(this, 'minute')} />
 
-        <div style={styles.container} >
+        <div style={this.prepareStyles(styles.container)} >
           {clock}
         </div>
 

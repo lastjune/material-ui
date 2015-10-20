@@ -1,10 +1,12 @@
 const React = require('react');
+const ReactDOM = require('react-dom');
 const CssEvent = require('./utils/css-event');
 const StylePropable = require('./mixins/style-propable');
 const Transitions = require('./styles/transitions');
 const ClickAwayable = require('./mixins/click-awayable');
 const FlatButton = require('./flat-button');
-
+const DefaultRawTheme = require('./styles/raw-themes/light-raw-theme');
+const ThemeManager = require('./styles/theme-manager');
 
 const Snackbar = React.createClass({
 
@@ -29,10 +31,29 @@ const Snackbar = React.createClass({
     openOnMount: React.PropTypes.bool,
   },
 
+  //for passing default theme context to children
+  childContextTypes: {
+    muiTheme: React.PropTypes.object,
+  },
+
+  getChildContext () {
+    return {
+      muiTheme: this.state.muiTheme,
+    };
+  },
+
   getInitialState() {
     return {
       open: this.props.openOnMount || false,
+      muiTheme: this.context.muiTheme ? this.context.muiTheme : ThemeManager.getMuiTheme(DefaultRawTheme),
     };
+  },
+
+  //to update theme inside state whenever a new theme is passed down
+  //from the parent / owner using context
+  componentWillReceiveProps (nextProps, nextContext) {
+    let newMuiTheme = nextContext.muiTheme ? nextContext.muiTheme : this.state.muiTheme;
+    this.setState({muiTheme: newMuiTheme});
   },
 
   componentDidMount() {
@@ -52,7 +73,7 @@ const Snackbar = React.createClass({
         this._setAutoHideTimer();
 
         //Only Bind clickaway after transition finishes
-        CssEvent.onTransitionEnd(React.findDOMNode(this), () => {
+        CssEvent.onTransitionEnd(ReactDOM.findDOMNode(this), () => {
           this._bindClickAway();
         });
       }
@@ -68,11 +89,11 @@ const Snackbar = React.createClass({
   },
 
   getTheme() {
-    return this.context.muiTheme.component.snackbar;
+    return this.state.muiTheme.snackbar;
   },
 
   getSpacing() {
-    return this.context.muiTheme.spacing;
+    return this.state.muiTheme.rawTheme.spacing;
   },
 
   getStyles() {
@@ -130,8 +151,8 @@ const Snackbar = React.createClass({
     const styles = this.getStyles();
 
     const rootStyles = this.state.open ?
-      this.mergeStyles(styles.root, styles.rootWhenOpen, style) :
-      this.mergeStyles(styles.root, style);
+      this.prepareStyles(styles.root, styles.rootWhenOpen, style) :
+      this.prepareStyles(styles.root, style);
 
     let actionButton;
     if (action) {

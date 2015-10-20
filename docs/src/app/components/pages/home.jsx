@@ -1,21 +1,22 @@
-let React = require('react');
-let Router = require('react-router');
-let { Mixins, RaisedButton, Styles } = require('material-ui');
-let HomeFeature = require('./home-feature');
-let FullWidthSection = require('../full-width-section');
+const React = require('react');
+const {History} = require('react-router');
+const { Mixins, RaisedButton, Styles } = require('material-ui');
+const HomeFeature = require('./home-feature');
+const FullWidthSection = require('../full-width-section');
 
-let { StylePropable, StyleResizable } = Mixins;
-let { Colors, Spacing, Typography } = Styles;
-let ThemeManager = new Styles.ThemeManager().getCurrentTheme();
+const { StylePropable, StyleResizable } = Mixins;
+const { Colors, Spacing, Typography } = Styles;
+const ThemeManager = Styles.ThemeManager;
+const DefaultRawTheme = Styles.LightRawTheme;
 
 
-let HomePage = React.createClass({
+const HomePage = React.createClass({
 
-  mixins: [StylePropable, StyleResizable],
-
-  contextTypes: {
-    router: React.PropTypes.func
-  },
+  mixins: [
+    StylePropable,
+    StyleResizable,
+    History,
+  ],
 
   render() {
     let style = {
@@ -48,7 +49,7 @@ let HomePage = React.createClass({
         maxWidth: 575,
       },
       label: {
-        color: ThemeManager.palette.primary1Color,
+        color: DefaultRawTheme.palette.primary1Color,
       },
       githubStyle: {
         margin: '16px 32px 0px 8px'
@@ -157,16 +158,16 @@ let HomePage = React.createClass({
       <FullWidthSection useContent={true} contentStyle={styles}>
         <HomeFeature
           heading="Get Started"
-          route="get-started"
+          route="/get-started"
           img="images/get-started.svg"
           firstChild={true}/>
         <HomeFeature
           heading="Customization"
-          route="customization"
+          route="/customization"
           img="images/css-framework.svg" />
         <HomeFeature
           heading="Components"
-          route="components"
+          route="/components"
           img="images/components.svg"
           lastChild={true}/>
       </FullWidthSection>
@@ -207,8 +208,8 @@ let HomePage = React.createClass({
   },
 
   _onDemoClick() {
-    this.context.router.transitionTo('components');
-  }
+    this.history.pushState(null, '/components');
+  },
 });
 
 module.exports = HomePage;

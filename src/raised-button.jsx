@@ -1,11 +1,13 @@
-let React = require('react');
-let StylePropable = require('./mixins/style-propable');
-let Transitions = require('./styles/transitions');
-let ColorManipulator = require('./utils/color-manipulator');
-let Typography = require('./styles/typography');
-let EnhancedButton = require('./enhanced-button');
-let Paper = require('./paper');
-
+const React = require('react');
+const ReactDOM = require('react-dom');
+const StylePropable = require('./mixins/style-propable');
+const Transitions = require('./styles/transitions');
+const ColorManipulator = require('./utils/color-manipulator');
+const Typography = require('./styles/typography');
+const EnhancedButton = require('./enhanced-button');
+const Paper = require('./paper');
+const DefaultRawTheme = require('./styles/raw-themes/light-raw-theme');
+const ThemeManager = require('./styles/theme-manager');
 
 function validateLabel (props, propName, componentName) {
   if (!props.children && !props.label) {
@@ -15,12 +17,23 @@ function validateLabel (props, propName, componentName) {
 }
 
 
-let RaisedButton = React.createClass({
+const RaisedButton = React.createClass({
 
   mixins: [StylePropable],
 
   contextTypes: {
     muiTheme: React.PropTypes.object,
+  },
+
+  //for passing default theme context to children
+  childContextTypes: {
+    muiTheme: React.PropTypes.object,
+  },
+
+  getChildContext () {
+    return {
+      muiTheme: this.state.muiTheme,
+    };
   },
 
   propTypes: {
@@ -49,14 +62,17 @@ let RaisedButton = React.createClass({
       touched: false,
       initialZDepth: zDepth,
       zDepth: zDepth,
+      muiTheme: this.context.muiTheme ? this.context.muiTheme : ThemeManager.getMuiTheme(DefaultRawTheme),
     };
   },
 
-  componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps, nextContext) {
     let zDepth = nextProps.disabled ? 0 : 1;
+    let newMuiTheme = nextContext.muiTheme ? nextContext.muiTheme : this.state.muiTheme;
     this.setState({
       zDepth: zDepth,
       initialZDepth: zDepth,
+      muiTheme: newMuiTheme,
     });
   },
 
@@ -83,14 +99,15 @@ let RaisedButton = React.createClass({
   },
 
   getThemeButton() {
-    return this.context.muiTheme.component.button;
+    return this.state.muiTheme.button;
   },
 
   getTheme() {
-    return this.context.muiTheme.component.raisedButton;
+    return this.state.muiTheme.raisedButton;
   },
 
   getStyles() {
+
     let amount = (this.props.primary || this.props.secondary) ? 0.4 : 0.08;
     let styles = {
       root: {
@@ -120,10 +137,11 @@ let RaisedButton = React.createClass({
         opacity: 1,
         fontSize: '14px',
         letterSpacing: 0,
-        textTransform: 'uppercase',
+        textTransform: this.getTheme().textTransform ? this.getTheme().textTransform :
+                    (this.getThemeButton().textTransform ? this.getThemeButton().textTransform : 'uppercase'),
         fontWeight: Typography.fontWeightMedium,
         margin: 0,
-        padding: '0px ' + this.context.muiTheme.spacing.desktopGutterLess + 'px',
+        padding: '0px ' + this.state.muiTheme.rawTheme.spacing.desktopGutterLess + 'px',
         userSelect: 'none',
         lineHeight: (this.props.style && this.props.style.height) ?
          this.props.style.height : this.getThemeButton().height + 'px',
@@ -153,7 +171,7 @@ let RaisedButton = React.createClass({
     let labelElement;
     if (label) {
       labelElement = (
-        <span style={this.mergeAndPrefix(styles.label, this.props.labelStyle)}>
+        <span style={this.prepareStyles(styles.label, this.props.labelStyle)}>
           {label}
         </span>
       );
@@ -174,19 +192,19 @@ let RaisedButton = React.createClass({
 
     return (
       <Paper
-        style={this.mergeAndPrefix(styles.root, this.props.style)}
+        style={this.mergeStyles(styles.root, this.props.style)}
         zDepth={this.state.zDepth}>
           <EnhancedButton
             {...other}
             {...buttonEventHandlers}
             ref="container"
             disabled={disabled}
-            style={this.mergeAndPrefix(styles.container)}
+            style={this.mergeStyles(styles.container)}
             focusRippleColor={rippleColor}
             touchRippleColor={rippleColor}
             focusRippleOpacity={rippleOpacity}
             touchRippleOpacity={rippleOpacity}>
-              <div ref="overlay" style={this.mergeAndPrefix(
+              <div ref="overlay" style={this.prepareStyles(
                   styles.overlay,
                   (this.state.hovered && !this.props.disabled) && styles.overlayWhenHovered
                 )}>
@@ -240,11 +258,11 @@ let RaisedButton = React.createClass({
     if (keyboardFocused && !this.props.disabled) {
       this.setState({ zDepth: this.state.initialZDepth + 1 });
       let amount = (this.props.primary || this.props.secondary) ? 0.4 : 0.08;
-      React.findDOMNode(this.refs.overlay).style.backgroundColor = ColorManipulator.fade(this.mergeAndPrefix(this.getStyles().label, this.props.labelStyle).color, amount);
+      ReactDOM.findDOMNode(this.refs.overlay).style.backgroundColor = ColorManipulator.fade(this.prepareStyles(this.getStyles().label, this.props.labelStyle).color, amount);
     }
     else if (!this.state.hovered) {
       this.setState({ zDepth: this.state.initialZDepth });
-      React.findDOMNode(this.refs.overlay).style.backgroundColor = 'transparent';
+      ReactDOM.findDOMNode(this.refs.overlay).style.backgroundColor = 'transparent';
     }
   },
 });

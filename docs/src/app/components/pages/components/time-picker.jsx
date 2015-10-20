@@ -20,10 +20,22 @@ let TimePickerPage = React.createClass({
             desc: 'This is the initial time value of the component.'
           },
           {
+            name: 'floatingLabelText',
+            type: 'string',
+            header: 'optional',
+            desc: 'The text string to use for the floating label element.'
+          },
+          {
             name: 'format',
             type: 'one of: ampm, 24hr',
             header: 'default: ampm',
             desc: 'Tells the component to display the picker in ampm (12hr) format or 24hr format.'
+          },
+          {
+            name: 'hintText',
+            type: 'string',
+            header: 'optional',
+            desc: 'The hint text string to display. Note, floatingLabelText will overide this.'
           },
           {
             name: 'pedantic',
@@ -38,13 +50,48 @@ let TimePickerPage = React.createClass({
         infoArray: [
           {
             name: 'getTime',
-            header: 'DatePicker.getTime()',
+            header: 'TimePicker.getTime()',
             desc: 'Returns the current time value.'
           },
           {
             name: 'setTime',
-            header: 'DatePicker.setTime(t)',
+            header: 'TimePicker.setTime(t)',
             desc: 'Sets the time value to t, where t is a date object.'
+          },
+          {
+            name: 'formatTime',
+            header: 'TimePicker.formatTime(time)',
+            desc: 'Formats the Date object to a current component\'s time format.'
+          }
+        ]
+      },
+      {
+        name: 'Events',
+        infoArray: [
+          {
+            name: 'onChange',
+            header: 'function(null, time)',
+            desc: 'Callback function that is fired when the time value ' +
+            'changes. The time value is passed in a Date Object.' +
+            'Since there is no particular event associated with ' +
+            'the change the first argument will always be null and the second ' +
+            'argument will be the new Date instance.'
+          },
+          {
+            name: 'onFocus',
+            header: 'function(event)',
+            desc: 'Callback function that is fired when the timepicker field ' +
+                  'gains focus.'
+          },
+          {
+            name: 'onDismiss',
+            header: 'function()',
+            desc: 'Fired when the timepicker dialog is dismissed.'
+          },
+          {
+            name: 'onShow',
+            header: 'function()',
+            desc: 'Fired when the timepicker dialog is shown.'
           }
         ]
       }

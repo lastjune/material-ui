@@ -1,30 +1,52 @@
-let React = require('react/addons');
-let WindowListenable = require('./mixins/window-listenable');
-let CssEvent = require('./utils/css-event');
-let KeyCode = require('./utils/key-code');
-let Transitions = require('./styles/transitions');
-let StylePropable = require('./mixins/style-propable');
-let FlatButton = require('./flat-button');
-let Overlay = require('./overlay');
-let Paper = require('./paper');
+const React = require('react');
+const ReactDOM = require('react-dom');
+const WindowListenable = require('./mixins/window-listenable');
+const CssEvent = require('./utils/css-event');
+const KeyCode = require('./utils/key-code');
+const Transitions = require('./styles/transitions');
+const StylePropable = require('./mixins/style-propable');
+const FlatButton = require('./flat-button');
+const Overlay = require('./overlay');
+const Paper = require('./paper');
+const DefaultRawTheme = require('./styles/raw-themes/light-raw-theme');
+const ThemeManager = require('./styles/theme-manager');
 
-let ReactTransitionGroup = React.addons.TransitionGroup;
+const ReactTransitionGroup = require('react-addons-transition-group');
 
-let TransitionItem = React.createClass({
+const TransitionItem = React.createClass({
   mixins: [StylePropable],
 
   contextTypes: {
     muiTheme: React.PropTypes.object,
   },
 
-  getInitialState() {
+  //for passing default theme context to children
+  childContextTypes: {
+    muiTheme: React.PropTypes.object,
+  },
+
+  getChildContext () {
     return {
-      style: {},
+      muiTheme: this.state.muiTheme,
     };
   },
 
+  getInitialState() {
+    return {
+      style: {},
+      muiTheme: this.context.muiTheme ? this.context.muiTheme : ThemeManager.getMuiTheme(DefaultRawTheme),
+    };
+  },
+
+  //to update theme inside state whenever a new theme is passed down
+  //from the parent / owner using context
+  componentWillReceiveProps (nextProps, nextContext) {
+    let newMuiTheme = nextContext.muiTheme ? nextContext.muiTheme : this.state.muiTheme;
+    this.setState({muiTheme: newMuiTheme});
+  },
+
   componentWillEnter(callback) {
-    let spacing = this.context.muiTheme.spacing;
+    let spacing = this.state.muiTheme.rawTheme.spacing;
 
     this.setState({
       style: {
@@ -46,7 +68,7 @@ let TransitionItem = React.createClass({
 
     setTimeout(() => {
       if (this.isMounted()) callback();
-    }.bind(this), 450); // matches transition duration
+    }, 450); // matches transition duration
   },
 
   render() {
@@ -55,7 +77,7 @@ let TransitionItem = React.createClass({
       ...other,
     } = this.props;
 
-    return <div {...other} style={this.mergeAndPrefix(this.state.style, style)}>
+    return <div {...other} style={this.prepareStyles(this.state.style, style)}>
         {this.props.children}
       </div>;
   },
@@ -67,6 +89,17 @@ let Dialog = React.createClass({
 
   contextTypes: {
     muiTheme: React.PropTypes.object,
+  },
+
+  //for passing default theme context to children
+  childContextTypes: {
+    muiTheme: React.PropTypes.object,
+  },
+
+  getChildContext () {
+    return {
+      muiTheme: this.state.muiTheme,
+    };
   },
 
   propTypes: {
@@ -103,7 +136,15 @@ let Dialog = React.createClass({
   getInitialState() {
     return {
       open: this.props.openImmediately || false,
+      muiTheme: this.context.muiTheme ? this.context.muiTheme : ThemeManager.getMuiTheme(DefaultRawTheme),
     };
+  },
+
+  //to update theme inside state whenever a new theme is passed down
+  //from the parent / owner using context
+  componentWillReceiveProps (nextProps, nextContext) {
+    let newMuiTheme = nextContext.muiTheme ? nextContext.muiTheme : this.state.muiTheme;
+    this.setState({muiTheme: newMuiTheme});
   },
 
   componentDidMount() {
@@ -119,7 +160,7 @@ let Dialog = React.createClass({
   },
 
   getStyles() {
-    let spacing = this.context.muiTheme.spacing;
+    let spacing = this.state.muiTheme.rawTheme.spacing;
 
     let main = {
       position: 'fixed',
@@ -154,7 +195,7 @@ let Dialog = React.createClass({
     let title = {
         margin: 0,
         padding: gutter + gutter + '0 ' + gutter,
-        color: this.context.muiTheme.palette.textColor,
+        color: this.state.muiTheme.rawTheme.palette.textColor,
         fontSize: 24,
         lineHeight: '32px',
         fontWeight: '400',
@@ -162,17 +203,17 @@ let Dialog = React.createClass({
 
 
     if (this.state.open) {
-      main = this.mergeAndPrefix(main, {
+      main = this.mergeStyles(main, {
         left: 0,
         transition: Transitions.easeOut('0ms', 'left', '0ms'),
       });
     }
 
     return {
-      main: this.mergeAndPrefix(main, this.props.style),
-      content: this.mergeAndPrefix(content, this.props.contentStyle),
+      main: this.mergeStyles(main, this.props.style),
+      content: this.mergeStyles(content, this.props.contentStyle),
       paper: {
-        background: this.context.muiTheme.canvasColor,
+        background: this.state.muiTheme.rawTheme.palette.canvasColor,
       },
       body: this.mergeStyles(body, this.props.bodyStyle),
       title: this.mergeStyles(title, this.props.titleStyle),
@@ -187,12 +228,12 @@ let Dialog = React.createClass({
       // If the title is a string, wrap in an h3 tag.
       // If not, just use it as a node.
       title = Object.prototype.toString.call(this.props.title) === '[object String]' ?
-        <h3 style={styles.title}>{this.props.title}</h3> :
+        <h3 style={this.prepareStyles(styles.title)}>{this.props.title}</h3> :
         this.props.title;
     }
 
     return (
-      <div ref="container" style={styles.main}>
+      <div ref="container" style={this.prepareStyles(styles.main)}>
         <ReactTransitionGroup component="div" ref="dialogWindow">
           {this.state.open &&
             <TransitionItem
@@ -203,7 +244,7 @@ let Dialog = React.createClass({
                 zDepth={4}>
                 {title}
 
-                <div ref="dialogContent" style={styles.body}>
+                <div ref="dialogContent" style={this.prepareStyles(styles.body)}>
                   {this.props.children}
                 </div>
 
@@ -225,9 +266,9 @@ let Dialog = React.createClass({
   },
 
   dismiss() {
-    CssEvent.onTransitionEnd(this.getDOMNode(), () => {
+    CssEvent.onTransitionEnd(ReactDOM.findDOMNode(this), () => {
       this.refs.dialogOverlay.allowScrolling();
-    }.bind(this));
+    });
 
     this.setState({ open: false });
     this._onDismiss();
@@ -258,6 +299,9 @@ let Dialog = React.createClass({
     if (actionJSON.ref) {
       props.ref = actionJSON.ref;
       props.keyboardFocused = actionJSON.ref === this.props.actionFocus;
+    }
+    if (actionJSON.id) {
+      props.id = actionJSON.id;
     }
 
     return (
@@ -291,7 +335,7 @@ let Dialog = React.createClass({
       }
 
       actionContainer = (
-        <div style={actionStyle}>
+        <div style={this.prepareStyles(actionStyle)}>
           {actionObjects}
         </div>
       );
@@ -303,9 +347,9 @@ let Dialog = React.createClass({
   _positionDialog() {
     if (this.state.open) {
       let clientHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-      let container = this.getDOMNode();
-      let dialogWindow = this.refs.dialogWindow.getDOMNode();
-      let dialogContent = this.refs.dialogContent.getDOMNode();
+      let container = ReactDOM.findDOMNode(this);
+      let dialogWindow = ReactDOM.findDOMNode(this.refs.dialogWindow);
+      let dialogContent = ReactDOM.findDOMNode(this.refs.dialogContent);
       let minPaddingTop = 16;
 
       //Reset the height in case the window was resized.
@@ -328,7 +372,7 @@ let Dialog = React.createClass({
         let maxDialogContentHeight = clientHeight - 2 * (styles.body.padding + 64);
 
         if (this.props.title) maxDialogContentHeight -= dialogContent.previousSibling.offsetHeight;
-        if (this.props.actions) maxDialogContentHeight -= dialogContent.nextSibling.offsetHeight;
+        if (this.props.actions.length) maxDialogContentHeight -= dialogContent.nextSibling.offsetHeight;
 
         dialogContent.style.maxHeight = maxDialogContentHeight + 'px';
       }

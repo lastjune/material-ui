@@ -1,45 +1,57 @@
-let React = require('react');
-let DateTime = require('../utils/date-time');
-let IconButton = require('../icon-button');
-let Toolbar = require('../toolbar/toolbar');
-let ToolbarGroup = require('../toolbar/toolbar-group');
-let NavigationChevronLeft = require('../svg-icons/navigation/chevron-left');
-let NavigationChevronLeftDouble = require('../svg-icons/navigation-chevron-left-double');
-let NavigationChevronRight = require('../svg-icons/navigation/chevron-right');
-let NavigationChevronRightDouble = require('../svg-icons/navigation-chevron-right-double');
-let SlideInTransitionGroup = require('../transition-groups/slide-in');
+const React = require('react');
+const DateTime = require('../utils/date-time');
+const IconButton = require('../icon-button');
+const Toolbar = require('../toolbar/toolbar');
+const ToolbarGroup = require('../toolbar/toolbar-group');
+const NavigationChevronLeft = require('../svg-icons/navigation/chevron-left');
+const NavigationChevronRight = require('../svg-icons/navigation/chevron-right');
+const SlideInTransitionGroup = require('../transition-groups/slide-in');
+const ThemeManager = require('../styles/theme-manager');
+const DefaultRawTheme = require('../styles/raw-themes/light-raw-theme');
 
+const CalendarToolbar = React.createClass({
+  contextTypes: {
+    muiTheme: React.PropTypes.object,
+  },
 
-let CalendarToolbar = React.createClass({
+  //for passing default theme context to children
+  childContextTypes: {
+    muiTheme: React.PropTypes.object,
+  },
+
+  getChildContext () {
+    return {
+      muiTheme: this.state.muiTheme,
+    };
+  },
 
   propTypes: {
     displayDate: React.PropTypes.object.isRequired,
-    onMonthChange: React.PropTypes.func,
-    onYearChange: React.PropTypes.func,
-    prevYear: React.PropTypes.bool,
-    nextYear: React.PropTypes.bool,
-    prevMonth: React.PropTypes.bool,
     nextMonth: React.PropTypes.bool,
-    hideYearChangeButtons: React.PropTypes.bool,
+    onMonthChange: React.PropTypes.func,
+    prevMonth: React.PropTypes.bool,
   },
 
   getDefaultProps() {
     return {
-      prevYear: true,
-      nextYear: true,
-      prevMonth: true,
       nextMonth: true,
-      hideYearChangeButtons: false,
+      prevMonth: true,
     };
   },
 
   getInitialState() {
     return {
+      muiTheme: this.context.muiTheme ? this.context.muiTheme : ThemeManager.getMuiTheme(DefaultRawTheme),
       transitionDirection: 'up',
     };
   },
 
-  componentWillReceiveProps(nextProps) {
+  //to update theme inside state whenever a new theme is passed down
+  //from the parent / owner using context
+  componentWillReceiveProps (nextProps, nextContext) {
+    let newMuiTheme = nextContext.muiTheme ? nextContext.muiTheme : this.state.muiTheme;
+    this.setState({muiTheme: newMuiTheme});
+
     let direction;
 
     if (nextProps.displayDate !== this.props.displayDate) {
@@ -74,9 +86,10 @@ let CalendarToolbar = React.createClass({
   render() {
     let month = DateTime.getFullMonth(this.props.displayDate);
     let year = this.props.displayDate.getFullYear();
-    let prevYearChangeButton = this._getPrevYearChangeButton();
-    let nextYearChangeButton = this._getNextYearChangeButton();
     let styles = this._styles();
+
+    const nextButtonIcon = this.state.muiTheme.isRtl ? <NavigationChevronRight /> : <NavigationChevronLeft />;
+    const prevButtonIcon = this.state.muiTheme.isRtl ? <NavigationChevronLeft /> : <NavigationChevronRight />;
 
     return (
       <Toolbar className="mui-date-picker-calendar-toolbar" style={styles.root} noGutter={true}>
@@ -87,13 +100,11 @@ let CalendarToolbar = React.createClass({
         </SlideInTransitionGroup>
 
         <ToolbarGroup key={0} float="left">
-          {prevYearChangeButton}
-
           <IconButton
             style={styles.button}
             disabled={!this.props.prevMonth}
             onTouchTap={this._prevMonthTouchTap}>
-              <NavigationChevronLeft />
+              {nextButtonIcon}
           </IconButton>
         </ToolbarGroup>
 
@@ -102,51 +113,11 @@ let CalendarToolbar = React.createClass({
             style={styles.button}
             disabled={!this.props.nextMonth}
             onTouchTap={this._nextMonthTouchTap}>
-              <NavigationChevronRight />
+              {prevButtonIcon}
           </IconButton>
-
-          {nextYearChangeButton}
         </ToolbarGroup>
       </Toolbar>
     );
-  },
-
-  _getPrevYearChangeButton() {
-    let style = {
-      display: this.props.hideYearChangeButtons ? 'none' : '',
-    };
-
-    return (
-      <IconButton
-        style={style}
-        disabled={!this.props.prevYear}
-        onTouchTap={this._prevYearTouchTap}>
-          <NavigationChevronLeftDouble />
-      </IconButton>
-    );
-  },
-
-  _getNextYearChangeButton() {
-    let style = {
-      display: this.props.hideYearChangeButtons ? 'none' : '',
-    };
-
-    return (
-      <IconButton
-        style={style}
-        disabled={!this.props.nextYear}
-        onTouchTap={this._nextYearTouchTap}>
-          <NavigationChevronRightDouble />
-      </IconButton>
-    );
-  },
-
-  _prevYearTouchTap() {
-    if (this.props.onYearChange && this.props.prevYear) this.props.onYearChange(-1);
-  },
-
-  _nextYearTouchTap() {
-    if (this.props.onYearChange && this.props.nextYear) this.props.onYearChange(1);
   },
 
   _prevMonthTouchTap() {

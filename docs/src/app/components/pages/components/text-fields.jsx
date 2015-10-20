@@ -1,14 +1,15 @@
-let React = require('react/addons');
+let React = require('react');
 let { ClearFix, Mixins, SelectField, TextField, Styles } = require('material-ui');
 let ComponentDoc = require('../../component-doc');
 let { Colors } = Styles;
 let { StyleResizable } = Mixins;
 let Code = require('text-fields-code');
 let CodeExample = require('../../code-example/code-example');
+const LinkedStateMixin = require('react-addons-linked-state-mixin');
 
 let TextFieldsPage = React.createClass({
 
-  mixins: [StyleResizable, React.addons.LinkedStateMixin],
+  mixins: [StyleResizable, LinkedStateMixin],
 
   getInitialState() {
     return {
@@ -80,6 +81,12 @@ let TextFieldsPage = React.createClass({
             desc: 'If true, the field receives the property width 100%.'
           },
           {
+            name: 'hintStyle',
+            type: 'object',
+            header: 'optional',
+            desc: 'Override the inline-styles of the TextField\'s hint text element.'
+          },
+          {
             name: 'hintText',
             type: 'string',
             header: 'optional',
@@ -90,6 +97,18 @@ let TextFieldsPage = React.createClass({
             type: 'bool',
             header: 'default: false',
             desc: 'If true, a textarea element will be rendered. The textarea also grows and shrinks according to the number of lines.'
+          },
+          {
+            name: 'rows',
+            type: 'string',
+            header: 'default: 1',
+            desc: 'Number of rows to display when multiLine option is set to true.'
+          },
+          {
+            name: 'rowsMax',
+            type: 'string',
+            header: 'default: null',
+            desc: 'Maximum number of rows to display when multiLine option is set to true.'
           },
           {
             name: 'onEnterKeyDown',
@@ -114,6 +133,12 @@ let TextFieldsPage = React.createClass({
             type: 'object',
             header: 'optional',
             desc: 'Override the inline-styles of the TextField\'s underline element when focussed.'
+          },
+          {
+            name: 'underlineDisabledStyle',
+            type: 'object',
+            header: 'optional',
+            desc: 'Override the inline-styles of the TextField\'s underline element when disabled.'
           },
           {
             name: 'type',
@@ -163,19 +188,19 @@ let TextFieldsPage = React.createClass({
         infoArray: [
           {
             name: 'onBlur',
-            header: 'function(e)',
+            header: 'function(event)',
             desc: 'Callback function that is fired when the textfield loses' +
                   'focus.'
           },
           {
             name: 'onChange',
-            header: 'function(e)',
+            header: 'function(event)',
             desc: 'Callback function that is fired when the textfield\'s value ' +
                   'changes.'
           },
           {
             name: 'onFocus',
-            header: 'function(e)',
+            header: 'function(event)',
             desc: 'Callback function that is fired when the textfield gains ' +
                   'focus.'
           },
@@ -211,6 +236,10 @@ let TextFieldsPage = React.createClass({
                 style={styles.textfield}
                 hintText="Hint Text" /><br/>
               <TextField
+                style={styles.textField}
+                hintText="Styled Hint Text"
+                hintStyle={{color: 'red'}} /><br/>
+              <TextField
                 style={styles.textfield}
                 hintText="Hint Text"
                 defaultValue="Default Value" /><br/>
@@ -226,6 +255,11 @@ let TextFieldsPage = React.createClass({
                 underlineFocusStyle={{borderColor: Colors.amber900}} /><br />
               <TextField
                 style={styles.textfield}
+                disabled={true}
+                hintText="Custom Underline Disabled Style"
+                underlineDisabledStyle={{borderColor:Colors.purple500, borderBottom: 'solid 1px'}} /><br />
+              <TextField
+                style={styles.textfield}
                 hintText="Hint Text"
                 valueLink={this.linkState('valueLinkValue')} /><br/>
               <TextField
@@ -235,6 +269,12 @@ let TextFieldsPage = React.createClass({
               <TextField
                 style={styles.textfield}
                 hintText="The hint text can be as long as you want, it will wrap."
+                multiLine={true} /><br/>
+              <TextField
+                style={styles.textfield}
+                rows={2}
+                rowsMax={4}
+                hintText="Hint Text (MultiLine) with rows: 2 and rowsMax: 4."
                 multiLine={true} /><br/>
               <TextField
                 style={styles.textfield}

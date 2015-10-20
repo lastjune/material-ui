@@ -57,6 +57,12 @@ class IconMenus extends React.Component {
             desc: 'Indicates if the menu should render with compact desktop styles.'
           },
           {
+            name: 'iconStyle',
+            type: 'object',
+            header: 'optional',
+            desc: 'The style object to use to override underlying icon style.'
+          },
+          {
             name: 'iconButtonElement',
             type: 'element: IconButton',
             header: 'required',
@@ -108,12 +114,12 @@ class IconMenus extends React.Component {
         infoArray: [
           {
             name: 'onItemTouchTap',
-            header: 'function(e, item)',
+            header: 'function(event, item)',
             desc: 'Fired when a menu item is touchTapped.'
           },
           {
             name: 'onChange',
-            header: 'function(e, value)',
+            header: 'function(event, value)',
             desc: 'Fired when a menu item is touchTapped and the menu item value ' +
               'is not equal to the current menu value.'
           }
